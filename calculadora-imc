@@ -120,89 +120,112 @@
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 
-  main kt
+ main.java
 
-package com.example.calculadoraimc
+package com.example.calculadoraimc;
 
-import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import android.widget.EditText
-import android.widget.SeekBar
-import android.widget.SeekBar.OnSeekBarChangeListener
-import android.widget.TextView
-import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import java.util.Locale
+import android.graphics.Typeface;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.SeekBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import java.util.Locale;
 
-class MainActivity : AppCompatActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
+public class MainActivity extends AppCompatActivity {
 
-        // CORREÇÃO: O código abaixo ajusta o layout para não ficar sob a barra de status
-        val mainView = findViewById<View>(R.id.main)
-        ViewCompat.setOnApplyWindowInsetsListener(mainView) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        EdgeToEdge.enable(this);
+        setContentView(R.layout.activity_main);
+
+        // Ajuste de margens (Edge-to-Edge)
+        View mainView = findViewById(R.id.main);
+        if (mainView != null) {
+            ViewCompat.setOnApplyWindowInsetsListener(mainView, (v, insets) -> {
+                Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+                v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+                return insets;
+            });
         }
 
-        // Referenciando os componentes do XML
-        val editTextPeso = findViewById<EditText>(R.id.edit_text_peso)
-        val seekBarAltura = findViewById<SeekBar>(R.id.seekbar_altura)
-        val buttonLimpar = findViewById<Button>(R.id.button_limpar)
-        val buttonCalcular = findViewById<Button>(R.id.button_calcular)
-        val textViewHeightValor = findViewById<TextView>(R.id.textview_Altura)
-        val textViewResult = findViewById<TextView>(R.id.textview_resultado)
+        // --- Referenciando Componentes ---
+        // Verifique se o ID no XML é "edit_text_peso"
+        EditText editTextPeso = findViewById(R.id.edit_text_peso);
+        SeekBar seekBarAltura = findViewById(R.id.seekbar_altura);
+        Button buttonLimpar = findViewById(R.id.button_limpar);
+        Button buttonCalcular = findViewById(R.id.button_calcular);
 
-        // Atualiza o texto da altura enquanto o usuário move a barra
-        seekBarAltura.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                textViewHeightValor.text = "$progress cm"
-            }
-            override fun onStartTrackingTouch(seekBar: SeekBar?) {}
-            override fun onStopTrackingTouch(seekBar: SeekBar?) {}
-        })
+        // Use o ID EXATO que está no seu XML (você usou textview_Altura com A maiúsculo lá)
+        TextView textViewHeightValor = findViewById(R.id.textview_Altura);
+        TextView textViewResult = findViewById(R.id.textview_resultado);
 
-        // Ação do botão Calcular
-        buttonCalcular.setOnClickListener {
-            val pesoTexto = editTextPeso.text.toString()
-
-            if (pesoTexto.isEmpty()) {
-                Toast.makeText(this, "Digite o peso primeiro!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            val alturaEmMetros = seekBarAltura.progress.toDouble() / 100
-
-            if (alturaEmMetros <= 0) {
-                Toast.makeText(this, "Ajuste a altura na barra!", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            try {
-                val peso = pesoTexto.toDouble()
-                val imc = peso / (alturaEmMetros * alturaEmMetros)
-
-                textViewResult.text = String.format(Locale.getDefault(), "IMC: %.2f", imc)
-                textViewResult.visibility = View.VISIBLE
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro no valor do peso", Toast.LENGTH_SHORT).show()
-            }
+        // --- Mudando a Fonte ---
+        Typeface minhaFonte = Typeface.create("sans-serif-light", Typeface.NORMAL);
+        if (textViewResult != null) {
+            textViewResult.setTypeface(minhaFonte);
         }
 
-        // Ação do botão Limpar
-        buttonLimpar.setOnClickListener {
-            editTextPeso.setText("")
-            seekBarAltura.progress = 0
-            textViewHeightValor.text = "0 cm"
-            textViewResult.visibility = View.GONE
+        // --- Lógica do SeekBar ---
+        if (seekBarAltura != null) {
+            seekBarAltura.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (textViewHeightValor != null) {
+                        textViewHeightValor.setText(progress + " cm");
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // --- Botão Calcular ---
+        if (buttonCalcular != null) {
+            buttonCalcular.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    String pesoStr = editTextPeso.getText().toString();
+                    if (pesoStr.isEmpty()) {
+                        Toast.makeText(MainActivity.this, "Digite o peso", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    try {
+                        double peso = Double.parseDouble(pesoStr);
+                        double altura = (double) seekBarAltura.getProgress() / 100;
+
+                        if (altura > 0) {
+                            double imc = peso / (altura * altura);
+                            if (textViewResult != null) {
+                                textViewResult.setText(String.format(Locale.getDefault(), "IMC: %.2f", imc));
+                                textViewResult.setVisibility(View.VISIBLE);
+                            }
+                        } else {
+                            Toast.makeText(MainActivity.this, "Selecione a altura", Toast.LENGTH_SHORT).show();
+                        }
+                    } catch (Exception e) {
+                        Toast.makeText(MainActivity.this, "Erro no valor do peso", Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+
+        // --- Botão Limpar ---
+        if (buttonLimpar != null) {
+            buttonLimpar.setOnClickListener(v -> {
+                editTextPeso.setText("");
+                seekBarAltura.setProgress(0);
+                if (textViewResult != null) textViewResult.setVisibility(View.GONE);
+            });
         }
     }
 }
-  
